@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>AR Video Try-On</title>
 
 <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
 <style>
-* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -18,34 +18,11 @@ body {
   overflow: hidden;
 }
 
-/* Debug overlay - shows errors on screen */
-#debugOverlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%;
-  background: rgba(255,0,0,0.85);
-  color: #fff;
-  font-size: 13px;
-  padding: 8px 12px;
-  z-index: 9999;
-  display: none;
-  word-break: break-all;
-}
-
-/* Loading indicator */
-#loadingOverlay {
-  position: fixed;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  color: #fff;
-  font-size: 16px;
-  z-index: 500;
-  text-align: center;
-}
-
+/* Logo */
 #logo {
   position: absolute;
-  top: 0px; left: 0px;
+  top: 0px;
+  left: 0px;
   width: 100px;
   z-index: 200;
   opacity: 0;
@@ -53,6 +30,7 @@ body {
   transition: opacity 0.4s ease;
 }
 
+/* Play Button */
 #toggleButton {
   position: absolute;
   bottom: 90px;
@@ -69,17 +47,31 @@ body {
   font-weight: bold;
   border: none;
   border-radius: 10px;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0, 0, 0, 0.5);
   color: #fff;
   cursor: pointer;
 }
 
+/* Toggle 3D Model Button */
+#toggleModelButton {
+  position: absolute;
+  bottom: 150px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Instagram */
 #instagramBtn {
   position: fixed;
-  bottom: 80px; right: 20px;
+  bottom: 80px;
+  right: 20px;
   background: white;
   border-radius: 50%;
-  width: 55px; height: 55px;
+  width: 55px;
+  height: 55px;
   opacity: 0;
   pointer-events: none;
   display: flex;
@@ -88,184 +80,214 @@ body {
   z-index: 130;
 }
 
-#instagramBtn img { width: 35px; }
+#instagramBtn img {
+  width: 35px;
+}
 
-.a-enter-vr-button { display: none !important; }
+.a-enter-vr-button {
+  display: none !important;
+}
+
 </style>
 </head>
 
-<body>
 
-<div id="debugOverlay"></div>
-<div id="loadingOverlay">📷 Starting camera...</div>
+<body>
 
 <img src="logo1.png" id="logo">
 
-<button id="toggleButton" class="plan-button">▶️ Play Video</button>
+<button id="toggleButton" class="plan-button">
+▶️ Play Video
+</button>
 
-<div id="instagramBtn" onclick="window.open('https://www.instagram.com/','_blank')">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg">
+<button id="toggleModelButton" class="plan-button">
+🧍 Show 3D Model
+</button>
+
+<div id="instagramBtn"
+onclick="window.open('https://www.instagram.com/','_blank')">
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg">
+
 </div>
 
 
+
 <a-scene
-  mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.01; filterBeta: 0.0001"
-  renderer="antialias:true"
-  vr-mode-ui="enabled:false"
-  device-orientation-permission-ui="enabled:false"
-  loading-screen="enabled:false"
+
+mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.01; filterBeta: 0.0001"
+
+renderer="antialias:true"
+
+vr-mode-ui="enabled:false"
+
+device-orientation-permission-ui="enabled:false"
+
+loading-screen="enabled:false"
+
 >
 
-  <a-assets timeout="60000">
+<a-assets>
 
-    <video
-      id="plan1Video"
-      src="plan1.mp4"
-      playsinline
-      webkit-playsinline
-      loop
-      muted
-      preload="auto"
-      crossorigin="anonymous">
-    </video>
+  <video
+  id="plan1Video"
+  src="plan1.mp4"
+  playsinline
+  loop
+  preload="auto">
+  </video>
 
-    <a-asset-item id="sanjiModel" src="Sanji.glb"></a-asset-item>
+  <!-- Preload the Sanji GLB model -->
+  <a-asset-item id="sanjiModel" src="Sanji.glb"></a-asset-item>
 
-  </a-assets>
+</a-assets>
 
-  <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+<a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-  <a-entity id="target1" mindar-image-target="targetIndex:0">
+<a-entity id="target1" mindar-image-target="targetIndex:0">
 
-    <a-video
-      id="videoDisplay"
-      src="#plan1Video"
-      position="0 0 0"
-      width="1"
-      height="0.75">
-    </a-video>
+  <!-- Video plane -->
+  <a-video
+  id="videoDisplay"
+  src="#plan1Video"
+  position="0 0 0"
+  width="1"
+  height="0.75"
+  visible="true">
+  </a-video>
 
-    <!--
-      Adjust position / scale / rotation once you can see it:
-        position X Y Z  (0 = centre of target, negative Y = below)
-        scale     make bigger e.g. "0.5 0.5 0.5"
-        rotation  e.g. "0 180 0" to flip
-    -->
-    <a-entity
-      id="sanjiEntity"
-      gltf-model="#sanjiModel"
-      position="0 -0.5 0.1"
-      scale="0.3 0.3 0.3"
-      rotation="0 0 0"
-      visible="false">
-    </a-entity>
+  <!-- Sanji 3D model — positioned slightly above center, hidden by default -->
+  <a-gltf-model
+  id="sanjiDisplay"
+  src="#sanjiModel"
+  position="0 0.1 0"
+  rotation="0 0 0"
+  scale="0.3 0.3 0.3"
+  visible="false"
+  animation="property: rotation; to: 0 360 0; loop: true; dur: 6000; easing: linear">
+  </a-gltf-model>
 
-  </a-entity>
+</a-entity>
 
 </a-scene>
 
 
+
 <script>
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-function showDebug(msg) {
-  const el = document.getElementById('debugOverlay');
-  el.style.display = 'block';
-  el.textContent = '⚠️ ' + msg;
-  console.error(msg);
-}
+const videoEl        = document.querySelector('#plan1Video');
+const toggleButton   = document.querySelector('#toggleButton');
+const instagramBtn   = document.querySelector('#instagramBtn');
+const logo           = document.querySelector('#logo');
+const target         = document.querySelector('#target1');
+const toggleModelBtn = document.querySelector('#toggleModelButton');
+const sanjiDisplay   = document.querySelector('#sanjiDisplay');
+const videoDisplay   = document.querySelector('#videoDisplay');
 
-// Catch all unhandled JS errors and show on screen
-window.addEventListener('error', e => showDebug(e.message + ' (' + e.filename + ':' + e.lineno + ')'));
-window.addEventListener('unhandledrejection', e => showDebug('Promise error: ' + e.reason));
+let isPlaying    = false;
+let modelVisible = false;
 
-// ── Wait for A-Frame scene to load ─────────────────────────────────────────
-const sceneEl = document.querySelector('a-scene');
 
-// Hide loading text once scene is ready
-sceneEl.addEventListener('renderstart', () => {
-  document.getElementById('loadingOverlay').style.display = 'none';
-});
 
-sceneEl.addEventListener('loaded', function () {
+target.addEventListener('targetFound', () => {
 
-  const videoEl      = document.getElementById('plan1Video');
-  const toggleButton = document.getElementById('toggleButton');
-  const instagramBtn = document.getElementById('instagramBtn');
-  const logo         = document.getElementById('logo');
-  const target       = document.getElementById('target1');
-  const sanjiEntity  = document.getElementById('sanjiEntity');
-
-  if (!target)       { showDebug('ERROR: #target1 not found'); return; }
-  if (!sanjiEntity)  { showDebug('ERROR: #sanjiEntity not found'); return; }
-  if (!videoEl)      { showDebug('ERROR: #plan1Video not found'); return; }
-
-  let isPlaying = false;
-
-  // ── Target found: show UI ──────────────────────────────────────────────
-  target.addEventListener('targetFound', () => {
-    [toggleButton, instagramBtn, logo].forEach(el => {
-      el.style.opacity = '1';
-      el.style.pointerEvents = 'auto';
-    });
+  [ toggleButton, toggleModelBtn, instagramBtn, logo ].forEach(el => {
+    el.style.opacity      = "1";
+    el.style.pointerEvents = "auto";
   });
 
-  // ── Target lost: hide everything ──────────────────────────────────────
-  target.addEventListener('targetLost', () => {
-    [toggleButton, instagramBtn, logo].forEach(el => {
-      el.style.opacity = '0';
-      el.style.pointerEvents = 'none';
-    });
+});
+
+
+target.addEventListener('targetLost', () => {
+
+  [ toggleButton, toggleModelBtn, instagramBtn, logo ].forEach(el => {
+    el.style.opacity      = "0";
+    el.style.pointerEvents = "none";
+  });
+
+  videoEl.pause();
+  isPlaying = false;
+  toggleButton.textContent = "▶️ Play Video";
+
+  // Hide model when target is lost
+  sanjiDisplay.setAttribute('visible', false);
+  videoDisplay.setAttribute('visible', true);
+  modelVisible = false;
+  toggleModelBtn.textContent = "🧍 Show 3D Model";
+
+});
+
+
+toggleButton.addEventListener('click', () => {
+
+  if (!isPlaying) {
+    videoEl.play();
+    isPlaying = true;
+    toggleButton.textContent = "⏸ Pause Video";
+  } else {
     videoEl.pause();
-    sanjiEntity.setAttribute('visible', 'false');
     isPlaying = false;
-    toggleButton.textContent = '▶️ Play Video';
-  });
-
-  // ── Play / Pause button ────────────────────────────────────────────────
-  toggleButton.addEventListener('click', () => {
-    if (!isPlaying) {
-      const playPromise = videoEl.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            sanjiEntity.setAttribute('visible', 'true');
-            isPlaying = true;
-            toggleButton.textContent = '⏸ Pause Video';
-          })
-          .catch(err => showDebug('Video play failed: ' + err));
-      }
-    } else {
-      videoEl.pause();
-      sanjiEntity.setAttribute('visible', 'false');
-      isPlaying = false;
-      toggleButton.textContent = '▶️ Play Video';
-    }
-  });
+    toggleButton.textContent = "▶️ Play Video";
+  }
 
 });
 
 
-// ── Google Sheet Heartbeat ─────────────────────────────────────────────────
+// Toggle between video and 3D model
+toggleModelBtn.addEventListener('click', () => {
+
+  modelVisible = !modelVisible;
+
+  if (modelVisible) {
+    // Show 3D model, hide video
+    sanjiDisplay.setAttribute('visible', true);
+    videoDisplay.setAttribute('visible', false);
+    videoEl.pause();
+    isPlaying = false;
+    toggleButton.textContent = "▶️ Play Video";
+    toggleModelBtn.textContent = "🎬 Show Video";
+  } else {
+    // Show video, hide 3D model
+    sanjiDisplay.setAttribute('visible', false);
+    videoDisplay.setAttribute('visible', true);
+    toggleModelBtn.textContent = "🧍 Show 3D Model";
+  }
+
+});
+
+
+
+// =========================
+// GOOGLE SHEET HEARTBEAT
+// =========================
+
 const SESSION_ID = "<?= sessionId ?>";
 
-function sendHeartbeat() {
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
-    google.script.run.heartbeat(SESSION_ID);
-  }
+function sendHeartbeat(){
+  google.script.run.heartbeat(SESSION_ID);
 }
+
 setInterval(sendHeartbeat, 5000);
 
 
-// ── Security ───────────────────────────────────────────────────────────────
-document.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('keydown', e => {
-  if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
+
+// security
+
+document.addEventListener("contextmenu", e => e.preventDefault());
+
+document.addEventListener("keydown", e => {
+  if (
+    e.key === "F12" ||
+    (e.ctrlKey && e.shiftKey && e.key === "I")
+  ) {
     e.preventDefault();
   }
 });
 
+
 </script>
+
 
 </body>
 </html>
