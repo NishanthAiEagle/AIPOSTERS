@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>AR Video Try-On</title>
+
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+<style>
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: #000;
+  overflow: hidden;
+}
+
+/* Logo */
+#logo {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100px;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+/* Play Button */
+#toggleButton {
+  position: absolute;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.plan-button {
+  padding: 14px 22px;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Instagram */
+#instagramBtn {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  background: white;
+  border-radius: 50%;
+  width: 55px;
+  height: 55px;
+  opacity: 0;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 130;
+}
+
+#instagramBtn img {
+  width: 35px;
+}
+
+.a-enter-vr-button {
+  display: none !important;
+}
+
+</style>
+</head>
+
+
+<body>
+
+<img src="logo1.png" id="logo">
+
+<button id="toggleButton" class="plan-button">
+▶️ Play Video
+</button>
+
+<div id="instagramBtn"
+onclick="window.open('https://www.instagram.com/','_blank')">
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg">
+
+</div>
+
+
+
+<a-scene
+
+mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.01; filterBeta: 0.0001"
+
+renderer="antialias:true"
+
+vr-mode-ui="enabled:false"
+
+device-orientation-permission-ui="enabled:false"
+
+loading-screen="enabled:false"
+
+>
+
+<a-assets>
+
+<video
+id="plan1Video"
+src="plan1.mp4"
+playsinline
+loop
+preload="auto">
+</video>
+
+</a-assets>
+
+<a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+
+<a-entity id="target1" mindar-image-target="targetIndex:0">
+
+<a-video
+id="videoDisplay"
+src="#plan1Video"
+position="0 0 0"
+width="1"
+height="0.75">
+</a-video>
+
+</a-entity>
+
+</a-scene>
+
+
+
+<script>
+
+const videoEl = document.querySelector('#plan1Video');
+
+const toggleButton = document.querySelector('#toggleButton');
+
+const instagramBtn = document.querySelector('#instagramBtn');
+
+const logo = document.querySelector('#logo');
+
+const target = document.querySelector('#target1');
+
+let isPlaying = false;
+
+
+
+target.addEventListener('targetFound', () => {
+
+[ toggleButton , instagramBtn , logo ].forEach(el => {
+
+el.style.opacity = "1";
+
+el.style.pointerEvents = "auto";
+
+});
+
+});
+
+
+target.addEventListener('targetLost', () => {
+
+[ toggleButton , instagramBtn , logo ].forEach(el => {
+
+el.style.opacity = "0";
+
+el.style.pointerEvents = "none";
+
+});
+
+videoEl.pause();
+
+isPlaying = false;
+
+toggleButton.textContent = "▶️ Play Video";
+
+});
+
+
+toggleButton.addEventListener('click', () => {
+
+if (!isPlaying) {
+
+videoEl.play();
+
+isPlaying = true;
+
+toggleButton.textContent = "⏸ Pause Video";
+
+} else {
+
+videoEl.pause();
+
+isPlaying = false;
+
+toggleButton.textContent = "▶️ Play Video";
+
+}
+
+});
+
+
+
+// =========================
+// GOOGLE SHEET HEARTBEAT
+// =========================
+
+const SESSION_ID = "<?= sessionId ?>";
+
+function sendHeartbeat(){
+
+google.script.run.heartbeat(SESSION_ID);
+
+}
+
+setInterval(sendHeartbeat , 5000);
+
+
+
+// security
+
+document.addEventListener("contextmenu", e=>e.preventDefault());
+
+document.addEventListener("keydown", e=>{
+
+if(
+
+e.key==="F12" ||
+
+(e.ctrlKey && e.shiftKey && e.key==="I")
+
+){
+
+e.preventDefault();
+
+}
+
+});
+
+
+</script>
+
+
+</body>
+</html>
