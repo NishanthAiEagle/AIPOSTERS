@@ -1,184 +1,109 @@
-/* ======================================================
-   JEWELS-AI | ULTRA FAST DRIVE AR ENGINE
-   Optimized Version - Live Drive Sync (No Caching)
-   Feature: Auto-Crop (Center-Fill) for 16:9 and 9:16
-====================================================== */
+const SPREADSHEET_ID = '1M3A0Ndh2MwCXgu_rRM-npvN5fix4ZyZKIT3KsaKGoFY';
 
-const API_KEY = "AKfycbxjPBl9Yb29GQIra-OecxL8o1Bu46u16ZY1KVvWDgfbq0mq6A2-9aaGHxp5TcxJOVRQ";
-const FOLDER_ID = "1lRpcvrupT-5T4xEjelS5lvkHV5zv-643";
 
-/* ===============================
-   OPTIMIZED CHROMA KEY SHADER
-================================ */
-AFRAME.registerShader('chromakey', {
-  schema: {
-    src: { type: 'map' },
-    color: { type: 'color', default: '#00FF00' },
-    threshold: { type: 'number', default: 0.3 },
-    smoothness: { type: 'number', default: 0.05 }
-  },
+function doGet() {
 
-  init: function (data) {
-    const videoTexture = new THREE.VideoTexture(data.src);
-    videoTexture.minFilter = THREE.LinearFilter;
-    videoTexture.magFilter = THREE.LinearFilter;
-    videoTexture.generateMipmaps = false;
-    videoTexture.format = THREE.RGBAFormat;
+  const access = checkAccess();
 
-    this.material = new THREE.ShaderMaterial({
-      uniforms: {
-        tex: { value: videoTexture },
-        keyColor: { value: new THREE.Color(data.color) },
-        similarity: { value: data.threshold },
-        smoothness: { value: data.smoothness }
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform sampler2D tex;
-        uniform vec3 keyColor;
-        uniform float similarity;
-        uniform float smoothness;
-        varying vec2 vUv;
-        void main() {
-          vec4 videoColor = texture2D(tex, vUv);
-          float diff = distance(videoColor.rgb, keyColor);
-          float alpha = smoothstep(similarity, similarity + smoothness, diff);
-          
-          if (alpha < 0.1) discard; 
-          
-          gl_FragColor = vec4(videoColor.rgb, alpha);
-        }
-      `,
-      transparent: true
-    });
-  },
+  if (access.granted) {
 
-  update: function (data) {
-    this.material.uniforms.similarity.value = data.threshold;
-    this.material.uniforms.smoothness.value = data.smoothness;
-    this.material.uniforms.keyColor.value = new THREE.Color(data.color);
+    const t = HtmlService.createTemplateFromFile("Index");
+
+    t.sessionId = access.sessionId;
+
+    return t.evaluate()
+      .setTitle("AR Video Try-On")
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+
   }
-});
 
-/* ===============================
-   FRESH DRIVE FETCH (NO CACHE)
-================================ */
-async function getLatestVideoId() {
-  try {
-    const url = `https://www.googleapis.com/drive/v3/files?q='${FOLDER_ID}'+in+parents+and+mimeType+contains+'video/'&orderBy=modifiedTime desc&pageSize=1&fields=files(id)&key=${API_KEY}`;
-    const response = await fetch(url);
-    const data = await response.json();
+  return HtmlService.createHtmlOutput(
+    "<h2>System Full</h2>"
+  );
 
-    if (data.files && data.files.length > 0) {
-      return data.files[0].id; 
-    }
-    return null;
-  } catch (error) {
-    console.error("Drive Fetch Error:", error);
-    return null;
-  }
 }
 
-/* ===============================
-   AR INTERACTION LOGIC
-================================ */
-window.addEventListener("load", async () => {
-  const videoEl = document.querySelector("#driveVideo");
-  const videoPlane = document.querySelector("#videoPlane") || document.querySelector("#videoCircle"); 
-  const target = document.querySelector("#target1");
-  const toggleButton = document.querySelector("#toggleButton");
-  const buttonsContainer = document.querySelector("#planButtons");
-  const curtain = document.querySelector("#blackCurtain"); 
-  const sceneEl = document.querySelector('a-scene');
 
-  let isPlaying = false;
 
-  // Cleanup MindAR UI
-  const uiKiller = setInterval(() => {
-    const uiElements = document.querySelectorAll('[class^="mindar-ui"], [id^="mindar-ui"]');
-    uiElements.forEach(el => el.remove());
-  }, 100);
+function checkAccess() {
 
-  // --- NEW: AUTO-CROP LOGIC ---
-  videoEl.addEventListener('loadedmetadata', () => {
-    if (!videoPlane) return;
-    
-    const videoWidth = videoEl.videoWidth;
-    const videoHeight = videoEl.videoHeight;
-    const aspectRatio = videoWidth / videoHeight;
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 
-    // We are fitting the video into a 1:1 square plane
-    if (aspectRatio > 1) { 
-      // HORIZONTAL (e.g., 16:9): Crop the left and right edges
-      const repeatX = 1 / aspectRatio; 
-      const offsetX = (1 - repeatX) / 2;
-      videoPlane.setAttribute('material', `repeat: ${repeatX} 1; offset: ${offsetX} 0`);
-    } else {
-      // VERTICAL (e.g., 9:16): Crop the top and bottom edges
-      const repeatY = aspectRatio; 
-      const offsetY = (1 - repeatY) / 2;
-      videoPlane.setAttribute('material', `repeat: 1 ${repeatY}; offset: 0 ${offsetY}`);
+  let sheet = ss.getSheetByName("AccessControl");
+
+  if (!sheet) {
+
+    sheet = ss.insertSheet("AccessControl");
+
+    sheet.appendRow(["User ID","Timestamp"]);
+
+  }
+
+  const now = new Date().getTime();
+
+  const limit = now - 30000;
+
+  const data = sheet.getDataRange().getValues();
+
+  let newList = [["User ID","Timestamp"]];
+
+  let active = 0;
+
+
+  for (let i = 1; i < data.length; i++) {
+
+    if (data[i][1] > limit) {
+
+      newList.push(data[i]);
+
+      active++;
+
     }
-  });
 
-  sceneEl.addEventListener("arReady", () => {
-    if (curtain) {
-      curtain.style.opacity = "0";
-      setTimeout(() => {
-        curtain.style.display = "none";
-        clearInterval(uiKiller);
-      }, 500);
+  }
+
+
+  if (active < 3) {
+
+    const id = "User_" + Math.random().toString(36).substr(2,5);
+
+    newList.push([id, now]);
+
+    sheet.clear();
+
+    sheet.getRange(1,1,newList.length,2).setValues(newList);
+
+    return {
+      granted: true,
+      sessionId: id
+    };
+
+  }
+
+  return { granted:false };
+
+}
+
+
+
+function heartbeat(id) {
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+  const sheet = ss.getSheetByName("AccessControl");
+
+  const data = sheet.getDataRange().getValues();
+
+  const now = new Date().getTime();
+
+  for (let i = 1; i < data.length; i++) {
+
+    if (data[i][0] == id) {
+
+      sheet.getRange(i+1,2).setValue(now);
+
     }
-  });
 
-  videoEl.addEventListener('playing', () => {
-    if (videoPlane) videoPlane.setAttribute('visible', 'true');
-  });
+  }
 
-  target.addEventListener("targetFound", async () => {
-    buttonsContainer.style.display = "block";
-    
-    const fileId = await getLatestVideoId();
-    if (fileId) {
-      const newSrc = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
-      
-      if (videoEl.src !== newSrc) {
-        videoEl.src = newSrc;
-        videoEl.load();
-      }
-    }
-  });
-
-  target.addEventListener("targetLost", () => {
-    buttonsContainer.style.display = "none";
-    videoEl.pause();
-    if (videoPlane) videoPlane.setAttribute('visible', 'false'); 
-    isPlaying = false;
-    toggleButton.textContent = "▶️ Play Video";
-  });
-
-  toggleButton.addEventListener("click", async () => {
-    try {
-      if (!isPlaying) {
-        videoEl.muted = false; 
-        await videoEl.play();
-        toggleButton.textContent = "⏸ Pause Video";
-        isPlaying = true;
-      } else {
-        videoEl.pause();
-        toggleButton.textContent = "▶️ Play Video";
-        isPlaying = false;
-      }
-    } catch (err) {
-      console.error("Playback error:", err);
-    }
-  });
-});
-
-document.addEventListener("contextmenu", (e) => e.preventDefault());
+}
