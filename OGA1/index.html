@@ -52,17 +52,6 @@ body {
   cursor: pointer;
 }
 
-/* Toggle 3D Model Button */
-#toggleModelButton {
-  position: absolute;
-  bottom: 150px;
-  left: 50%;
-  transform: translateX(-50%);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 100;
-}
-
 /* Instagram */
 #instagramBtn {
   position: fixed;
@@ -100,10 +89,6 @@ body {
 ▶️ Play Video
 </button>
 
-<button id="toggleModelButton" class="plan-button">
-🧍 Show 3D Model
-</button>
-
 <div id="instagramBtn"
 onclick="window.open('https://www.instagram.com/','_blank')">
 
@@ -129,16 +114,13 @@ loading-screen="enabled:false"
 
 <a-assets>
 
-  <video
-  id="plan1Video"
-  src="plan1.mp4"
-  playsinline
-  loop
-  preload="auto">
-  </video>
-
-  <!-- Preload the Sanji GLB model -->
-  <a-asset-item id="sanjiModel" src="Sanji.glb"></a-asset-item>
+<video
+id="plan1Video"
+src="plan1.mp4"
+playsinline
+loop
+preload="auto">
+</video>
 
 </a-assets>
 
@@ -146,26 +128,13 @@ loading-screen="enabled:false"
 
 <a-entity id="target1" mindar-image-target="targetIndex:0">
 
-  <!-- Video plane -->
-  <a-video
-  id="videoDisplay"
-  src="#plan1Video"
-  position="0 0 0"
-  width="1"
-  height="0.75"
-  visible="true">
-  </a-video>
-
-  <!-- Sanji 3D model — positioned slightly above center, hidden by default -->
-  <a-gltf-model
-  id="sanjiDisplay"
-  src="#sanjiModel"
-  position="0 0.1 0"
-  rotation="0 0 0"
-  scale="0.3 0.3 0.3"
-  visible="false"
-  animation="property: rotation; to: 0 360 0; loop: true; dur: 6000; easing: linear">
-  </a-gltf-model>
+<a-video
+id="videoDisplay"
+src="#plan1Video"
+position="0 0 0"
+width="1"
+height="0.75">
+</a-video>
 
 </a-entity>
 
@@ -175,84 +144,71 @@ loading-screen="enabled:false"
 
 <script>
 
-const videoEl        = document.querySelector('#plan1Video');
-const toggleButton   = document.querySelector('#toggleButton');
-const instagramBtn   = document.querySelector('#instagramBtn');
-const logo           = document.querySelector('#logo');
-const target         = document.querySelector('#target1');
-const toggleModelBtn = document.querySelector('#toggleModelButton');
-const sanjiDisplay   = document.querySelector('#sanjiDisplay');
-const videoDisplay   = document.querySelector('#videoDisplay');
+const videoEl = document.querySelector('#plan1Video');
 
-let isPlaying    = false;
-let modelVisible = false;
+const toggleButton = document.querySelector('#toggleButton');
+
+const instagramBtn = document.querySelector('#instagramBtn');
+
+const logo = document.querySelector('#logo');
+
+const target = document.querySelector('#target1');
+
+let isPlaying = false;
 
 
 
 target.addEventListener('targetFound', () => {
 
-  [ toggleButton, toggleModelBtn, instagramBtn, logo ].forEach(el => {
-    el.style.opacity      = "1";
-    el.style.pointerEvents = "auto";
-  });
+[ toggleButton , instagramBtn , logo ].forEach(el => {
+
+el.style.opacity = "1";
+
+el.style.pointerEvents = "auto";
+
+});
 
 });
 
 
 target.addEventListener('targetLost', () => {
 
-  [ toggleButton, toggleModelBtn, instagramBtn, logo ].forEach(el => {
-    el.style.opacity      = "0";
-    el.style.pointerEvents = "none";
-  });
+[ toggleButton , instagramBtn , logo ].forEach(el => {
 
-  videoEl.pause();
-  isPlaying = false;
-  toggleButton.textContent = "▶️ Play Video";
+el.style.opacity = "0";
 
-  // Hide model when target is lost
-  sanjiDisplay.setAttribute('visible', false);
-  videoDisplay.setAttribute('visible', true);
-  modelVisible = false;
-  toggleModelBtn.textContent = "🧍 Show 3D Model";
+el.style.pointerEvents = "none";
+
+});
+
+videoEl.pause();
+
+isPlaying = false;
+
+toggleButton.textContent = "▶️ Play Video";
 
 });
 
 
 toggleButton.addEventListener('click', () => {
 
-  if (!isPlaying) {
-    videoEl.play();
-    isPlaying = true;
-    toggleButton.textContent = "⏸ Pause Video";
-  } else {
-    videoEl.pause();
-    isPlaying = false;
-    toggleButton.textContent = "▶️ Play Video";
-  }
+if (!isPlaying) {
 
-});
+videoEl.play();
 
+isPlaying = true;
 
-// Toggle between video and 3D model
-toggleModelBtn.addEventListener('click', () => {
+toggleButton.textContent = "⏸ Pause Video";
 
-  modelVisible = !modelVisible;
+} else {
 
-  if (modelVisible) {
-    // Show 3D model, hide video
-    sanjiDisplay.setAttribute('visible', true);
-    videoDisplay.setAttribute('visible', false);
-    videoEl.pause();
-    isPlaying = false;
-    toggleButton.textContent = "▶️ Play Video";
-    toggleModelBtn.textContent = "🎬 Show Video";
-  } else {
-    // Show video, hide 3D model
-    sanjiDisplay.setAttribute('visible', false);
-    videoDisplay.setAttribute('visible', true);
-    toggleModelBtn.textContent = "🧍 Show 3D Model";
-  }
+videoEl.pause();
+
+isPlaying = false;
+
+toggleButton.textContent = "▶️ Play Video";
+
+}
 
 });
 
@@ -265,24 +221,33 @@ toggleModelBtn.addEventListener('click', () => {
 const SESSION_ID = "<?= sessionId ?>";
 
 function sendHeartbeat(){
-  google.script.run.heartbeat(SESSION_ID);
+
+google.script.run.heartbeat(SESSION_ID);
+
 }
 
-setInterval(sendHeartbeat, 5000);
+setInterval(sendHeartbeat , 5000);
 
 
 
 // security
 
-document.addEventListener("contextmenu", e => e.preventDefault());
+document.addEventListener("contextmenu", e=>e.preventDefault());
 
-document.addEventListener("keydown", e => {
-  if (
-    e.key === "F12" ||
-    (e.ctrlKey && e.shiftKey && e.key === "I")
-  ) {
-    e.preventDefault();
-  }
+document.addEventListener("keydown", e=>{
+
+if(
+
+e.key==="F12" ||
+
+(e.ctrlKey && e.shiftKey && e.key==="I")
+
+){
+
+e.preventDefault();
+
+}
+
 });
 
 
